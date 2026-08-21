@@ -2,21 +2,18 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"log"
+	nethttp "net/http"
+
+	apphttp "github.com/Limoncello23/NilchanHackTon2026/backend/internal/http"
 )
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintln(w, `{"status":"ok"}`)
-}
-
 func main() {
-	http.HandleFunc("/health", healthHandler)
+	router := apphttp.NewRouter()
 
 	fmt.Println("Server started on :8080")
 
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println(err)
+	if err := nethttp.ListenAndServe(":8080", router); err != nil {
+		log.Fatal(err)
 	}
 }
