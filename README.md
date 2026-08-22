@@ -19,3 +19,6 @@ Gamification of routine through RPG mechanics.
 💀 Boss Defeated
 ↓
 ⭐ XP
+
+Для запуска приложения напишите команду:
+docker compose up -d --build
