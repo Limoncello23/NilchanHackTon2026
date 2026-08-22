@@ -6,10 +6,14 @@ import (
 	nethttp "net/http"
 
 	apphttp "github.com/Limoncello23/NilchanHackTon2026/backend/internal/http"
+	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/routine"
 )
 
 func main() {
-	router := apphttp.NewRouter()
+	repo := routine.NewMemoryRepository()
+	service := routine.NewService(repo)
+	handler := routine.NewHandler(service)
+	router := apphttp.NewRouter(handler)
 
 	fmt.Println("Server started on :8080")
 
