@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { Source_Serif_4, Unbounded } from "next/font/google";
 
+import { SiteHeader } from "@/components/layout/site-header";
+
 import "./globals.css";
 
 const unbounded = Unbounded({
@@ -28,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${unbounded.variable} ${sourceSerif.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
+        <SiteHeader />
         {children}
       </body>
     </html>
