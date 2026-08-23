@@ -148,3 +148,41 @@ func TestGetRoutines(t *testing.T) {
 		t.Errorf("expected Test routine, got %q", routines[0].Name)
 	}
 }
+
+func TestGetByID(t *testing.T) {
+	repo := NewMemoryRepository()
+	service := NewService(repo)
+
+	routine := &Routine{
+		Name:   "Test routine",
+		Repeat: "daily",
+	}
+
+	if err := repo.Create(context.Background(), routine); err != nil {
+		t.Fatalf("unexpacted error: %v", err)
+	}
+
+	resOK, errOK := service.GetByID(context.Background(), routine.ID)
+
+	if resOK == nil {
+		t.Fatal("expected routine, got nil")
+	}
+
+	if errOK != nil {
+		t.Fatalf("unexpected error: %v", errOK)
+	}
+
+	if resOK.Name != "Test routine" {
+		t.Errorf("expected name: %q, got: %q", "Test routine", resOK.Name)
+	}
+
+	res404, err404 := service.GetByID(context.Background(), 42)
+
+	if res404 != nil {
+		t.Fatal("expected nil, got routine")
+	}
+
+	if err404 != ErrRoutineNotExist {
+		t.Fatalf("unexpected error: %v", err404)
+	}
+}
