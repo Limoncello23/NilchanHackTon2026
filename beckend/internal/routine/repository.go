@@ -6,8 +6,8 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, routine *Routine) error
-
 	GetAll(ctx context.Context) ([]*Routine, error)
+	GetByID(ctx context.Context, id int) (*Routine, error)
 }
 
 type MemoryRepository struct {
@@ -31,11 +31,20 @@ func (r *MemoryRepository) Create(ctx context.Context, routine *Routine) error {
 }
 
 func (r *MemoryRepository) GetAll(ctx context.Context) ([]*Routine, error) {
-	res := make([]*Routine, 0, len(r.routines))
+	routines := make([]*Routine, 0, len(r.routines))
 
 	for k := range r.routines {
-		res = append(res, r.routines[k])
+		routines = append(routines, r.routines[k])
 	}
 
-	return res, nil
+	return routines, nil
+}
+
+func (r *MemoryRepository) GetByID(ctx context.Context, id int) (*Routine, error) {
+	routine, ok := r.routines[id]
+	if !ok {
+		return nil, ErrRoutineNotExist
+	}
+
+	return routine, nil
 }

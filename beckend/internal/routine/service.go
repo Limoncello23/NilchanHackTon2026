@@ -7,8 +7,8 @@ import (
 
 type Service interface {
 	CreateRoutine(ctx context.Context, name, repeat string, tasks []Task) (*Routine, error)
-
 	GetRoutines(ctx context.Context) ([]*Routine, error)
+	GetByID(ctx context.Context, id int) (*Routine, error)
 }
 
 type service struct {
@@ -80,4 +80,13 @@ func (s *service) GetRoutines(ctx context.Context) ([]*Routine, error) {
 	}
 
 	return routines, nil
+}
+
+func (s *service) GetByID(ctx context.Context, id int) (*Routine, error) {
+	routine, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return routine, err
 }
