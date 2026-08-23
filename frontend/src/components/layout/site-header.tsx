@@ -5,25 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 
-import { LanguageToggle } from "@/components/layout/language-toggle";
-
 const NAV_LINKS = [
+  { href: "/about", label: "О проекте" },
   { href: "/faq", label: "FAQ" },
-  { href: "/about", label: "About" },
 ] as const;
 
 const MENU_TRANSITION_MS = 280;
 
 function navLinkClass(active: boolean, size: "desktop" | "mobile") {
-  const base
-    = size === "mobile"
+  const base =
+    size === "mobile"
       ? "font-display text-3xl tracking-wide"
       : "text-sm font-semibold uppercase tracking-wider";
 
   return `${base} transition ${
-    active
-      ? "text-tavern-gold"
-      : "text-tavern-muted hover:text-tavern-gold"
+    active ? "text-tavern-gold" : "text-tavern-muted hover:text-tavern-gold"
   }`;
 }
 
@@ -45,10 +41,8 @@ export function SiteHeader() {
   }
 
   function toggleMenu() {
-    if (menuOpen)
-      closeMenu();
-    else
-      openMenu();
+    if (menuOpen) closeMenu();
+    else openMenu();
   }
 
   useEffect(() => {
@@ -56,8 +50,7 @@ export function SiteHeader() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!menuMounted || menuOpen)
-      return;
+    if (!menuMounted || menuOpen) return;
 
     const timer = window.setTimeout(() => {
       setMenuMounted(false);
@@ -67,8 +60,7 @@ export function SiteHeader() {
   }, [menuMounted, menuOpen]);
 
   useEffect(() => {
-    if (!menuOpen)
-      return;
+    if (!menuOpen) return;
 
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -114,10 +106,6 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden justify-self-end md:block">
-          <LanguageToggle />
-        </div>
-
         <button
           type="button"
           className="justify-self-end rounded-md border border-tavern-border p-2 text-tavern-parchment transition hover:border-tavern-gold/50 hover:text-tavern-gold md:hidden"
@@ -126,13 +114,7 @@ export function SiteHeader() {
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           onClick={toggleMenu}
         >
-          {menuOpen
-            ? (
-                <CloseIcon />
-              )
-            : (
-                <BurgerIcon />
-              )}
+          {menuOpen ? <CloseIcon /> : <BurgerIcon />}
         </button>
       </div>
 
@@ -199,7 +181,13 @@ export function SiteHeader() {
 
 function BurgerIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M4 7h16M4 12h16M4 17h16"
         stroke="currentColor"
@@ -212,7 +200,13 @@ function BurgerIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M6 6l12 12M18 6L6 18"
         stroke="currentColor"
