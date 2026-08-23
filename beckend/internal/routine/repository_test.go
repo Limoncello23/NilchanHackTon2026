@@ -91,3 +91,43 @@ func TestMemoryRepositoryGetAll(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTasksOfRoutine(t *testing.T) {
+	routine := &Routine{
+		Name:   "Test routine",
+		Repeat: "daily",
+		Tasks: []Task{
+			{Title: "Task 1", Damage: 10},
+			{Title: "Task 2", Damage: 20},
+		},
+	}
+
+	repo := NewMemoryRepository()
+	if err := repo.Create(context.Background(), routine); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tasksOK, errOK := repo.GetTasksOfRoutine(context.Background(), routine.ID)
+
+	if errOK != nil {
+		t.Fatalf("unexpected error: %v", errOK)
+	}
+
+	if len(tasksOK) != 2 {
+		t.Errorf("expected 2 tasks, got %d", len(tasksOK))
+	}
+
+	if tasksOK[0].Title != "Task 1" || tasksOK[1].Title != "Task 2" {
+		t.Error("unexpected task names")
+	}
+
+	tasks404, err404 := repo.GetTasksOfRoutine(context.Background(), 42)
+
+	if tasks404 != nil {
+		t.Error("expected nil, got tasks")
+	}
+
+	if err404 != ErrRoutineNotExist {
+		t.Errorf("expected %q, got %q", ErrRoutineNotExist, err404)
+	}
+}
