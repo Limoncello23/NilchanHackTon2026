@@ -3,12 +3,16 @@ package http
 import (
 	"fmt"
 	nethttp "net/http"
+
+	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/routine"
 )
 
-func NewRouter() nethttp.Handler {
+func NewRouter(handler *routine.Handler) nethttp.Handler {
 	mux := nethttp.NewServeMux()
 
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("GET /routines", handler.GetRoutines)
+	mux.HandleFunc("POST /routines", handler.CreateRoutine)
 
 	return cors(mux)
 }
