@@ -21,8 +21,11 @@ export function ContractCard({ routine }: ContractCardProps) {
   const href = `/dungeon?routineId=${routine.id}`;
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-lg border border-tavern-border bg-tavern-panel shadow-lg shadow-black/40 transition hover:border-tavern-gold/60 hover:shadow-tavern-gold/10">
-      <Link href={href} className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-tavern-gold">
+    <article className="flex flex-col overflow-hidden rounded-lg border-b border-tavern-border bg-tavern-panel shadow-lg shadow-black/40 transition hover:border-tavern-gold/60 hover:shadow-tavern-gold/10">
+      <Link
+        href={href}
+        className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-tavern-gold"
+      >
         <div className="relative aspect-[4/5] w-full bg-tavern-wood">
           <Image
             src={artSrc}
@@ -48,7 +51,9 @@ export function ContractCard({ routine }: ContractCardProps) {
         <dl className="grid grid-cols-3 gap-2 text-center text-sm">
           <div className="rounded bg-tavern-wood/80 px-2 py-2">
             <dt className="text-xs text-tavern-muted">Таски</dt>
-            <dd className="font-medium text-tavern-parchment">{routine.tasks.length}</dd>
+            <dd className="font-medium text-tavern-parchment">
+              {routine.tasks.length}
+            </dd>
           </div>
           <div className="rounded bg-tavern-wood/80 px-2 py-2">
             <dt className="text-xs text-tavern-muted">HP</dt>
@@ -56,10 +61,7 @@ export function ContractCard({ routine }: ContractCardProps) {
           </div>
           <div className="rounded bg-tavern-wood/80 px-2 py-2">
             <dt className="text-xs text-tavern-muted">XP</dt>
-            <dd className="font-medium text-tavern-gold">
-              +
-              {total}
-            </dd>
+            <dd className="font-medium text-tavern-gold">+{total}</dd>
           </div>
         </dl>
 

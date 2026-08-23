@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-const PRELOAD_MS = 2000;
+const PRELOAD_MS = 1000;
 const FADE_MS = 300;
 
 export function SitePreloader() {
@@ -27,8 +27,7 @@ export function SitePreloader() {
   }, []);
 
   useEffect(() => {
-    if (visible)
-      return;
+    if (visible) return;
 
     const unmountTimer = window.setTimeout(() => {
       setMounted(false);
@@ -38,8 +37,7 @@ export function SitePreloader() {
   }, [visible]);
 
   useEffect(() => {
-    if (!mounted)
-      return;
+    if (!mounted) return;
 
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -49,8 +47,7 @@ export function SitePreloader() {
     };
   }, [mounted]);
 
-  if (!mounted)
-    return null;
+  if (!mounted) return null;
 
   return (
     <div
