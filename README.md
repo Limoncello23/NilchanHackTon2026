@@ -23,7 +23,7 @@ Gamification of routine through RPG mechanics.
 # Для запуска приложения  и бд напишите команду
 docker compose up -d --build
 # Запуск только бд
-docker compose -f docker-compose.bd.yml up -d
+docker compose -f docker-compose.db.yml up -d
 # Для миграций 
 Перейдите в папку beckend и выполните команду:
 
