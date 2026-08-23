@@ -8,6 +8,7 @@ type Repository interface {
 	Create(ctx context.Context, routine *Routine) error
 	GetAll(ctx context.Context) ([]*Routine, error)
 	GetByID(ctx context.Context, id int) (*Routine, error)
+	GetTasksOfRoutine(ctx context.Context, id int) ([]Task, error)
 }
 
 type MemoryRepository struct {
@@ -47,4 +48,13 @@ func (r *MemoryRepository) GetByID(ctx context.Context, id int) (*Routine, error
 	}
 
 	return routine, nil
+}
+
+func (r *MemoryRepository) GetTasksOfRoutine(ctx context.Context, id int) ([]Task, error) {
+	routine, ok := r.routines[id]
+	if !ok {
+		return nil, ErrRoutineNotExist
+	}
+
+	return routine.Tasks, nil
 }
