@@ -4,15 +4,19 @@ import (
 	"fmt"
 	nethttp "net/http"
 
+	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/dungeon"
 	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/routine"
 )
 
-func NewRouter(handler *routine.Handler) nethttp.Handler {
+func NewRouter(routineHandler *routine.Handler, dungeonHandler *dungeon.DungeonHandler) nethttp.Handler {
 	mux := nethttp.NewServeMux()
 
 	mux.HandleFunc("/health", healthHandler)
-	mux.HandleFunc("GET /routines", handler.GetRoutines)
-	mux.HandleFunc("POST /routines", handler.CreateRoutine)
+	mux.HandleFunc("GET /routines", routineHandler.GetRoutines)
+	mux.HandleFunc("POST /routines", routineHandler.CreateRoutine)
+	mux.HandleFunc("POST /routines/{id}/dungeons", dungeonHandler.CreateDungeon)
+	mux.HandleFunc("GET /dungeons/{id}", dungeonHandler.GetDungeon)
+	mux.HandleFunc("POST /tasks/{id}/complete", dungeonHandler.CompleteTask)
 
 	return cors(mux)
 }
