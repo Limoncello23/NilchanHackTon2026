@@ -13,8 +13,8 @@ const NAV_LINKS = [
 const MENU_TRANSITION_MS = 280;
 
 function navLinkClass(active: boolean, size: "desktop" | "mobile") {
-  const base =
-    size === "mobile"
+  const base
+    = size === "mobile"
       ? "font-display text-3xl tracking-wide"
       : "text-sm font-semibold uppercase tracking-wider";
 
@@ -41,7 +41,8 @@ export function SiteHeader() {
   }
 
   function toggleMenu() {
-    if (menuOpen) closeMenu();
+    if (menuOpen)
+      closeMenu();
     else openMenu();
   }
 
@@ -50,7 +51,8 @@ export function SiteHeader() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!menuMounted || menuOpen) return;
+    if (!menuMounted || menuOpen)
+      return;
 
     const timer = window.setTimeout(() => {
       setMenuMounted(false);
@@ -60,7 +62,8 @@ export function SiteHeader() {
   }, [menuMounted, menuOpen]);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen)
+      return;
 
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -171,7 +174,6 @@ export function SiteHeader() {
                 {label}
               </Link>
             ))}
-            <LanguageToggle className="mt-4" />
           </nav>
         </div>
       )}

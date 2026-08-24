@@ -44,20 +44,30 @@ export type Dungeon = {
   tasks: DungeonTask[];
 };
 
+export type CreateDungeonBody = {
+  routine_id: number;
+};
+
+export type CreateDungeonResponse = {
+  id: number;
+  name: string;
+  hp: number;
+};
+
 export type CompleteTaskResponse = {
   task_id: number;
   completed: boolean;
   damage: number;
   boss_hp: number;
-  xp_earned: number;
-  dungeon_status?: DungeonStatus;
+  status: DungeonStatus;
 };
 
 export type ApiClient = {
   getHealth: () => Promise<HealthResponse>;
   getRoutines: () => Promise<Routine[]>;
   createRoutine: (body: CreateRoutineBody) => Promise<Routine>;
-  getDungeon: () => Promise<Dungeon>;
+  createDungeon: (body: CreateDungeonBody) => Promise<CreateDungeonResponse>;
+  getDungeon: (id: number) => Promise<Dungeon>;
   completeTask: (taskId: number) => Promise<CompleteTaskResponse>;
 };
 

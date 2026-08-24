@@ -3,6 +3,8 @@ import { env } from "@/lib/env";
 import type {
   ApiClient,
   CompleteTaskResponse,
+  CreateDungeonBody,
+  CreateDungeonResponse,
   CreateRoutineBody,
   Dungeon,
   HealthResponse,
@@ -14,6 +16,7 @@ import { ApiError } from "./types";
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${env.apiUrl}${path}`, {
     ...init,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...init?.headers,
@@ -42,10 +45,16 @@ export const liveClient: ApiClient = {
       body: JSON.stringify(body),
     }),
 
-  getDungeon: () => request<Dungeon>("/dungeon"),
+  createDungeon: (body: CreateDungeonBody) =>
+    request<CreateDungeonResponse>("/dungeons", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  getDungeon: (id: number) => request<Dungeon>(`/dungeons/${id}`),
 
   completeTask: (taskId: number) =>
     request<CompleteTaskResponse>(`/tasks/${taskId}/complete`, {
-      method: "POST",
+      method: "PATCH",
     }),
 };

@@ -29,3 +29,26 @@ body {
   color: var(--foreground);
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
 }
+
+@keyframes hp-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.animate-hp-shake {
+  animation: hp-shake 0.4s ease-in-out;
+}
