@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/database"
+	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/dungeon"
 	apphttp "github.com/Limoncello23/NilchanHackTon2026/backend/internal/http"
 	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/routine"
 )
@@ -32,10 +33,15 @@ func main() {
 
 	log.Println("Database is ready")
 
-	repo := routine.NewMemoryRepository()
-	service := routine.NewService(repo)
-	handler := routine.NewHandler(service)
-	router := apphttp.NewRouter(handler)
+	routineRepo := routine.NewMemoryRepository()
+	routineService := routine.NewService(routineRepo)
+	routineHandler := routine.NewHandler(routineService)
+
+	dungeonRepo := dungeon.NewMemoryRepository(routineRepo)
+	dungeonService := dungeon.NewService(dungeonRepo, routineService)
+	dungeonHandler := dungeon.NewDungeonHandler(dungeonService)
+
+	router := apphttp.NewRouter(routineHandler, dungeonHandler)
 
 	fmt.Println("Server started on :8080")
 
