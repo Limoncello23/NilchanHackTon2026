@@ -20,22 +20,15 @@ Status: 200 OK
 {
   "status": "ok"
 }
-```
 ---
 
 # 2. Routines
 
-Routine — это контракт на бой с Boss.
+Routine — это готовый контракт с набором задач.
 
-Пример:
+Пользователь выбирает Routine на Guild Board.
 
-🐉 БЬЁМ NILCHAN
-
-Tasks:
-
-1. Спросил когда выплаты за REP — Damage: 20
-2. Спросил когда будет качественный IT контент — Damage: 20
-3. Написал аккаунт-менеджеру — Damage: 20
+После выбора из Routine создаётся Dungeon.
 
 ---
 
@@ -72,7 +65,6 @@ Status: 200 OK
     ]
   }
 ]
-```
 ---
 ## POST /routines
 
@@ -83,11 +75,6 @@ Status: 200 OK
 ```http
 POST /routines
 Content-Type: application/json
-```
-
-### Body
-
-```json
 {
   "name": "БЬЁМ NILCHAN",
   "repeat": "weekly",
@@ -106,9 +93,7 @@ Content-Type: application/json
     }
   ]
 }
-```
 ### Validation
-
 #### name
 
 - обязательное поле
@@ -118,10 +103,8 @@ Content-Type: application/json
 
 Допустимые значения:
 
-```text
-daily
-weekly
-```
+- `daily`
+- `weekly`
 
 #### tasks
 
@@ -140,8 +123,6 @@ weekly
 ### Response
 
 Status: 201 Created
-
-```json
 {
   "id": 1,
   "name": "БЬЁМ NILCHAN",
@@ -164,55 +145,54 @@ Status: 201 Created
     }
   ]
 }
-```
 ---
-
 # 3. Dungeon
 
-Dungeon — это активный контракт, который игрок взял с доски.
+Dungeon — это конкретный экземпляр выбранной пользователем Routine.
 
-Dungeon создаётся на основе Routine.
+Пользователь сначала получает список Routine через `GET /routines`.
 
-Пример:
+Затем выбирает Routine и передаёт её `routine_id` при создании Dungeon.
 
-🐉 БЬЁМ NILCHAN
+Dungeon создаётся на основе выбранной Routine.
 
-HP: 60 / 60
+Tasks Dungeon создаются из Tasks выбранной Routine и имеют собственное состояние `completed`.
 
-Tasks:
-
-1. Спросил когда выплаты за REP
-   Damage: 20
-   Completed: false
-
-2. Спросил когда будет качественный IT контент
-   Damage: 20
-   Completed: false
-
-3. Написал аккаунт-менеджеру
-   Damage: 20
-   Completed: false
-
-Max HP Boss:
-
-20 + 20 + 20 = 60
 ---
-
-## GET /dungeon
-
-Получить текущий активный Dungeon.
 
 ### Request
 
-```http
-GET /dungeon
-```
+POST /dungeons
+
+Content-Type: application/json
+
+{
+  "routine_id": 1
+}
 
 ### Response
 
-Status: 200 OK
+201 Created
 
-```json
+{
+  "id": 1,
+  "name": "БЬЁМ NILCHAN",
+  "hp": 60
+}
+---
+
+## GET /dungeons/{id}
+
+Получить Dungeon по ID.
+
+### Request
+
+GET /dungeons/1
+
+### Response
+
+200 OK
+
 {
   "id": 1,
   "name": "БЬЁМ NILCHAN",
@@ -240,136 +220,43 @@ Status: 200 OK
     }
   ]
 }
-```
 ---
 
-## POST /tasks/{id}/complete
+## PATCH /tasks/{id}/complete
 
-Выполнить Task и нанести Boss урон.
+Выполнить Task.
 
 ### Request
 
-```http
-POST /tasks/1/complete
-```
-
-`1` — ID задачи.
-
-### Логика
-
-```text
-Task
- ↓
-completed = true
- ↓
-Boss HP -= damage
- ↓
-XP += damage
-```
-
-Пример:
-
-```text
-До:
-
-Boss HP: 60 / 60
-
-Task Damage: 20
-
-После:
-
-Boss HP: 40 / 60
-XP: +20
-```
+PATCH /tasks/1/complete
 
 ### Response
 
-Status: 200 OK
+200 OK
 
-```json
 {
   "task_id": 1,
   "completed": true,
   "damage": 20,
   "boss_hp": 40,
-  "xp_earned": 20
+  "status": "active"
 }
-```
 ---
 
-# 4. Boss Defeated
+## Dungeon Victory
 
-Когда Boss HP становится равным `0`:
+Если после выполнения Task HP босса становится равным 0:
 
-```text
-Boss HP: 0
-```
+status = "completed"
 
-Dungeon получает статус:
+Пример:
 
-```text
-completed
-```
+200 OK
 
-### Response
-
-```json
 {
   "task_id": 3,
   "completed": true,
   "damage": 20,
   "boss_hp": 0,
-  "xp_earned": 20,
-  "dungeon_status": "completed"
+  "status": "completed"
 }
-```
-
-Frontend показывает:
-
-```text
-💀 BOSS DEFEATED!
-
-🐉 БЬЁМ NILCHAN
-
-⭐ +60 XP
-
-[ ВЕРНУТЬСЯ К ДОСКЕ ]
-```
-
-После победы игрок возвращается на Guild Board и может взять новый контракт.
-
----
-
-# 5. MVP Flow
-
-```text
-🏰 GUILD BOARD
-       ↓
-📜 GET /routines
-       ↓
-🐉 БЬЁМ NILCHAN
-       ↓
-[ ВЗЯТЬ КОНТРАКТ ]
-       ↓
-GET /dungeon
-       ↓
-❤️ 60 / 60
-       ↓
-POST /tasks/1/complete
-       ↓
-❤️ 40 / 60
-       ↓
-POST /tasks/2/complete
-       ↓
-❤️ 20 / 60
-       ↓
-POST /tasks/3/complete
-       ↓
-❤️ 0 / 60
-       ↓
-💀 BOSS DEFEATED
-       ↓
-⭐ +60 XP
-       ↓
-🏰 GUILD BOARD
-```
