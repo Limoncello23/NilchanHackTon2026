@@ -36,7 +36,7 @@ func (h *Handler) CreateRoutine(w http.ResponseWriter, r *http.Request) {
 		req.Tasks,
 	)
 	if err != nil {
-		check400or500(err, w)
+		checkErrAndReturnStatus400or500(err, w)
 		return
 	}
 
@@ -59,6 +59,26 @@ func (h *Handler) GetRoutines(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(routines); err != nil {
+		return
+	}
+}
+
+func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	var id int
+	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	routine, err := h.service.GetByID(r.Context(), id)
+	if err != nil {
+		checkErrAndReturnStatus400or500(err, w)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(routine); err != nil {
 		return
 	}
 }

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS routine_tasks (
+  id SERIAL PRIMARY KEY,
+  routine_id INT NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  damage INT NOT NULL
+);
