@@ -2,6 +2,7 @@ package routine
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -26,6 +27,7 @@ func (h *Handler) CreateRoutine(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
+		fmt.Println(err)
 		return
 	}
 
