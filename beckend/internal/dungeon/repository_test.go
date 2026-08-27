@@ -79,6 +79,62 @@ func TestMemoryRepositoryCreateDungeonTasks(t *testing.T) {
 		t.Fatal("task must be marked as completed")
 	}
 }
+func TestMemoryRepositoryGetDungeonWithTasks(t *testing.T) {
+	t.Parallel()
+
+	repo := NewMemoryRepository(repositoryRoutineProvider{
+		tasks: []routine.Task{
+			{ID: 10, Title: "Send report", Damage: 20},
+			{ID: 11, Title: "Deploy app", Damage: 40},
+		},
+	})
+
+	dungeon := &Dungeon{
+		NameBoss:  "Nilchan",
+		MaxHP:     60,
+		HP:        60,
+		Status:    true,
+		RoutineID: 7,
+	}
+
+	dungeonID, err := repo.CreateDungeon(dungeon)
+	if err != nil {
+		t.Fatalf("CreateDungeon() error = %v", err)
+	}
+
+	if err := repo.CreateDungeonTasks(7, dungeonID); err != nil {
+		t.Fatalf("CreateDungeonTasks() error = %v", err)
+	}
+
+	got, err := repo.GetDungeon(dungeonID)
+	if err != nil {
+		t.Fatalf("GetDungeon() error = %v", err)
+	}
+
+	if len(got.Tasks) != 2 {
+		t.Fatalf("len(Tasks) = %d, want 2", len(got.Tasks))
+	}
+
+	if got.Tasks[0].Title != "Send report" {
+		t.Fatalf("first task title = %q, want %q", got.Tasks[0].Title, "Send report")
+	}
+
+	if got.Tasks[0].Damage != 20 {
+		t.Fatalf("first task damage = %d, want 20", got.Tasks[0].Damage)
+	}
+
+	if got.Tasks[1].Title != "Deploy app" {
+		t.Fatalf("second task title = %q, want %q", got.Tasks[1].Title, "Deploy app")
+	}
+
+	if got.Tasks[1].Damage != 40 {
+		t.Fatalf("second task damage = %d, want 40", got.Tasks[1].Damage)
+	}
+
+	if got.Tasks[0].DungeonID != dungeonID || got.Tasks[1].DungeonID != dungeonID {
+		t.Fatalf("tasks have wrong dungeon ID")
+	}
+}
 
 func TestMemoryRepositoryCreateDungeonTasksErrors(t *testing.T) {
 	t.Parallel()
