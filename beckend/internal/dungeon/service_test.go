@@ -3,6 +3,7 @@ package dungeon
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/Limoncello23/NilchanHackTon2026/backend/internal/routine"
@@ -156,7 +157,7 @@ func TestServiceCompleteTask(t *testing.T) {
 			if tt.wantErr != nil {
 				return
 			}
-			if dungeon == nil || *dungeon != *tt.want {
+			if dungeon == nil || !reflect.DeepEqual(*dungeon, *tt.want) {
 				t.Fatalf("dungeon = %+v, want %+v", dungeon, tt.want)
 			}
 			if tt.wantKill && tt.repo.killDungeonID != tt.want.ID {
