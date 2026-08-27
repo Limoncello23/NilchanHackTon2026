@@ -168,7 +168,13 @@ func (r *MemoryRepository) GetDungeon(dungeonID int) (*Dungeon, error) {
 		return nil, fmt.Errorf("get dungeon %d: %w", dungeonID, ErrDungeonNotFound)
 	}
 
-	return cloneDungeon(dungeon), nil
+	result := cloneDungeon(dungeon)
+
+	tasks := r.dungeonTasks[dungeonID]
+	result.Tasks = make([]Task, len(tasks))
+	copy(result.Tasks, tasks)
+
+	return result, nil
 }
 
 func (r *MemoryRepository) GetDungeonTask(taskID int) (Task, error) {
