@@ -28,6 +28,11 @@ func (s *service) CreateDungeon(routineID int) (*Dungeon, error) {
 		return nil, ErrInvalidRoutineID
 	}
 
+	routine, err := s.routineRepo.GetByID(context.Background(), routineID)
+	if err != nil {
+		return nil, fmt.Errorf("get routine: %w", err)
+	}
+
 	routineTasks, err := s.routineRepo.GetTasksOfRoutine(context.Background(), routineID)
 	if err != nil {
 		return nil, fmt.Errorf("get routine tasks: %w", err)
@@ -44,7 +49,7 @@ func (s *service) CreateDungeon(routineID int) (*Dungeon, error) {
 
 	dungeon := &Dungeon{
 		ID:        0,               // ID will be set by the database - next id like in routie
-		NameBoss:  "Nilchan",       // Default boss name
+		NameBoss:  routine.Name,    // Default boss name
 		MaxHP:     calculatedMaxHP, // Default max HP - we can take tasksDMG * taksQuantity
 		HP:        calculatedMaxHP, // Default current HP
 		Status:    true,            // Dungeon is active

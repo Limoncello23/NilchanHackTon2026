@@ -10,12 +10,17 @@ import (
 )
 
 type serviceRoutineProvider struct {
-	tasks []routine.Task
-	err   error
+	routine *routine.Routine
+	tasks   []routine.Task
+	err     error
 }
 
 func (p serviceRoutineProvider) GetTasksOfRoutine(context.Context, int) ([]routine.Task, error) {
 	return p.tasks, p.err
+}
+
+func (p serviceRoutineProvider) GetByID(context.Context, int) (*routine.Routine, error) {
+	return p.routine, p.err
 }
 
 type serviceRepositoryStub struct {
@@ -75,16 +80,19 @@ func TestServiceCreateDungeon(t *testing.T) {
 	t.Parallel()
 
 	repo := &serviceRepositoryStub{createDungeonID: 8}
-	service := NewService(repo, serviceRoutineProvider{tasks: []routine.Task{
-		{Title: "First", Damage: 15},
-		{Title: "Second", Damage: 25},
-	}})
+	service := NewService(repo, serviceRoutineProvider{
+		routine: &routine.Routine{Name: "Test boss"},
+		tasks: []routine.Task{
+			{Title: "First", Damage: 15},
+			{Title: "Second", Damage: 25},
+		},
+	})
 
 	dungeon, err := service.CreateDungeon(3)
 	if err != nil {
 		t.Fatalf("CreateDungeon() error = %v", err)
 	}
-	if dungeon.ID != 8 || dungeon.HP != 40 || dungeon.MaxHP != 40 || !dungeon.Status || dungeon.RoutineID != 3 {
+	if dungeon.ID != 8 || dungeon.NameBoss != "Test boss" || dungeon.HP != 40 || dungeon.MaxHP != 40 || !dungeon.Status || dungeon.RoutineID != 3 {
 		t.Fatalf("dungeon = %+v, want created active dungeon with 40 HP", dungeon)
 	}
 	if repo.createdDungeon == nil {
