@@ -52,3 +52,17 @@ body {
 .animate-hp-shake {
   animation: hp-shake 0.4s ease-in-out;
 }
+
+@keyframes preloader-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-preloader-indeterminate {
+  width: 40%;
+  animation: preloader-indeterminate 1.2s ease-in-out infinite;
+}

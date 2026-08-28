@@ -8,6 +8,7 @@ import type { Dungeon } from "@/lib/api";
 
 import { HpBar } from "@/components/dungeon/hp-bar";
 import { TaskRow } from "@/components/dungeon/task-row";
+import { usePreloader } from "@/components/layout/preloader-context";
 import { VictoryScreen } from "@/components/victory/victory-screen";
 import { api, ApiError } from "@/lib/api";
 import { mapCombatApiError } from "@/lib/api/combat-errors";
@@ -25,6 +26,7 @@ function DungeonView() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get("id");
   const dungeonId = rawId ? Number(rawId) : NaN;
+  const { markReady } = usePreloader();
 
   const [dungeon, setDungeon] = useState<Dungeon | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,12 @@ function DungeonView() {
       cancelled = true;
     };
   }, [dungeonId]);
+
+  useEffect(() => {
+    if (!loading) {
+      markReady();
+    }
+  }, [loading, markReady]);
 
   useEffect(() => {
     if (!shake)

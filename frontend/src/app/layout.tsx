@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Source_Serif_4, Unbounded } from "next/font/google";
 
+import { PreloaderProvider } from "@/components/layout/preloader-context";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SitePreloader } from "@/components/layout/site-preloader";
 
@@ -31,9 +32,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${unbounded.variable} ${sourceSerif.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <SitePreloader />
-        <SiteHeader />
-        {children}
+        <PreloaderProvider>
+          <SitePreloader />
+          <SiteHeader />
+          {children}
+        </PreloaderProvider>
       </body>
     </html>
   );
