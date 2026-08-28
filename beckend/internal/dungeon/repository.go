@@ -11,6 +11,8 @@ import (
 
 type RoutineTaskProvider interface {
 	GetTasksOfRoutine(ctx context.Context, routineID int) ([]routine.Task, error)
+	GetByID(ctx context.Context, id int) (*routine.Routine, error)
+
 }
 
 type Repository interface {

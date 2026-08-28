@@ -21,6 +21,10 @@ func (p repositoryRoutineProvider) GetTasksOfRoutine(context.Context, int) ([]ro
 	return p.tasks, nil
 }
 
+func (p repositoryRoutineProvider) GetByID(context.Context, int) (*routine.Routine, error) {
+	return nil, p.err
+}
+
 func TestMemoryRepositoryCreateDungeonTasks(t *testing.T) {
 	t.Parallel()
 
