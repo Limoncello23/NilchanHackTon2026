@@ -2,10 +2,11 @@
 
 const DEFAULT_API_URL = "http://localhost:8080";
 
-function readEnv(key: string): string | undefined {
-  return process.env[key];
-}
-
 export const env = {
-  apiUrl: readEnv("NEXT_PUBLIC_API_URL") || DEFAULT_API_URL,
+  // API_URL: server-side (e.g. Docker SSR → http://app:8080)
+  // NEXT_PUBLIC_API_URL: browser / build-time public URL
+  apiUrl:
+    process.env.API_URL
+    || process.env.NEXT_PUBLIC_API_URL
+    || DEFAULT_API_URL,
 } as const;
