@@ -27,7 +27,8 @@ export function SitePreloader() {
   }, []);
 
   useEffect(() => {
-    if (visible) return;
+    if (visible)
+      return;
 
     const unmountTimer = window.setTimeout(() => {
       setMounted(false);
@@ -37,7 +38,8 @@ export function SitePreloader() {
   }, [visible]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted)
+      return;
 
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -47,7 +49,8 @@ export function SitePreloader() {
     };
   }, [mounted]);
 
-  if (!mounted) return null;
+  if (!mounted)
+    return null;
 
   return (
     <div

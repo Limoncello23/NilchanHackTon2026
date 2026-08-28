@@ -2,9 +2,6 @@ import { env } from "@/lib/env";
 
 import type {
   ApiClient,
-  CompleteTaskResponse,
-  CreateDungeonBody,
-  CreateDungeonResponse,
   CreateRoutineBody,
   Dungeon,
   HealthResponse,
@@ -45,16 +42,15 @@ export const liveClient: ApiClient = {
       body: JSON.stringify(body),
     }),
 
-  createDungeon: (body: CreateDungeonBody) =>
-    request<CreateDungeonResponse>("/dungeons", {
+  createDungeon: (routineId: number) =>
+    request<Dungeon>(`/routines/${routineId}/dungeons`, {
       method: "POST",
-      body: JSON.stringify(body),
     }),
 
   getDungeon: (id: number) => request<Dungeon>(`/dungeons/${id}`),
 
   completeTask: (taskId: number) =>
-    request<CompleteTaskResponse>(`/tasks/${taskId}/complete`, {
-      method: "PATCH",
+    request<Dungeon>(`/tasks/${taskId}/complete`, {
+      method: "POST",
     }),
 };

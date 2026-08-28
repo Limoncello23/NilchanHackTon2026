@@ -18,7 +18,7 @@ type HitFeedback = {
 };
 
 function isVictory(dungeon: Dungeon): boolean {
-  return dungeon.status === "completed" || dungeon.hp === 0;
+  return !dungeon.status || dungeon.hp <= 0;
 }
 
 function DungeonView() {
@@ -106,17 +106,15 @@ function DungeonView() {
             return prev;
           return {
             ...prev,
-            hp: result.boss_hp,
+            hp: result.hp,
             status: result.status,
             tasks: prev.tasks.map(item =>
-              item.id === result.task_id
-                ? { ...item, completed: result.completed }
-                : item,
+              item.id === taskId ? { ...item, completed: true } : item,
             ),
           };
         });
         setShake(true);
-        setHitFeedback({ damage: result.damage, key: Date.now() });
+        setHitFeedback({ damage: task.damage, key: Date.now() });
       }
       catch (err) {
         if (err instanceof ApiError && err.status === 409) {
@@ -201,7 +199,7 @@ function DungeonView() {
             Подземелье
           </p>
           <h1 className="font-display text-3xl text-tavern-parchment sm:text-4xl">
-            {dungeon.name}
+            {dungeon.name_boss}
           </h1>
           <p className="text-sm text-tavern-muted">
             Контракт #
@@ -267,7 +265,7 @@ function DungeonView() {
       {victory
         ? (
             <VictoryScreen
-              bossName={dungeon.name}
+              bossName={dungeon.name_boss}
               xpEarned={dungeon.max_hp}
             />
           )

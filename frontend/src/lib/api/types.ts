@@ -26,49 +26,34 @@ export type CreateRoutineBody = {
   }>;
 };
 
-export type DungeonStatus = "active" | "completed";
-
 export type DungeonTask = {
   id: number;
   title: string;
   damage: number;
   completed: boolean;
+  dungeon_id?: number;
 };
 
 export type Dungeon = {
   id: number;
-  name: string;
+  name_boss: string;
+  description_boss?: string | null;
   hp: number;
   max_hp: number;
-  status: DungeonStatus;
+  /** `true` = active, `false` = defeated */
+  status: boolean;
+  routine_id?: number;
+  created_at?: string;
   tasks: DungeonTask[];
-};
-
-export type CreateDungeonBody = {
-  routine_id: number;
-};
-
-export type CreateDungeonResponse = {
-  id: number;
-  name: string;
-  hp: number;
-};
-
-export type CompleteTaskResponse = {
-  task_id: number;
-  completed: boolean;
-  damage: number;
-  boss_hp: number;
-  status: DungeonStatus;
 };
 
 export type ApiClient = {
   getHealth: () => Promise<HealthResponse>;
   getRoutines: () => Promise<Routine[]>;
   createRoutine: (body: CreateRoutineBody) => Promise<Routine>;
-  createDungeon: (body: CreateDungeonBody) => Promise<CreateDungeonResponse>;
+  createDungeon: (routineId: number) => Promise<Dungeon>;
   getDungeon: (id: number) => Promise<Dungeon>;
-  completeTask: (taskId: number) => Promise<CompleteTaskResponse>;
+  completeTask: (taskId: number) => Promise<Dungeon>;
 };
 
 export class ApiError extends Error {

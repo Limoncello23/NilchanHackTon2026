@@ -4,12 +4,8 @@ import { liveClient } from "./client";
 
 export type {
   ApiClient,
-  CompleteTaskResponse,
-  CreateDungeonBody,
-  CreateDungeonResponse,
   CreateRoutineBody,
   Dungeon,
-  DungeonStatus,
   DungeonTask,
   HealthResponse,
   Repeat,

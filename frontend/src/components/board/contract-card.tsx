@@ -31,14 +31,12 @@ export function ContractCard({ routine }: ContractCardProps) {
     setError(null);
 
     try {
-      const dungeon = await api.createDungeon({ routine_id: routine.id });
+      const dungeon = await api.createDungeon(routine.id);
       router.push(`/dungeon?id=${dungeon.id}`);
     }
     catch (err) {
       const message
-        = err instanceof ApiError
-          ? err.message
-          : "Не удалось взять контракт";
+        = err instanceof ApiError ? err.message : "Не удалось взять контракт";
       setError(message);
       setPending(false);
     }
