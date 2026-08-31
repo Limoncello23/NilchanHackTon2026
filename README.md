@@ -20,24 +20,36 @@ Gamification of routine through RPG mechanics.
 ↓
 ⭐ XP
 
-# Для запуска приложения  и бд напишите команду
+## Запуск всего стека (БД + API + фронт + миграции/seed)
+
+```bash
 docker compose up -d --build
-# Запуск только бд
+```
+
+После старта:
+
+- Frontend: http://localhost:3000
+- API: http://localhost:8080
+- Postgres: `localhost:5432`
+
+Миграции и seed применяются автоматически при инициализации контейнера.
+
+## Только БД (локальная разработка бэкенда)
+
+```bash
 docker compose -f docker-compose.db.yml up -d
-# Для миграций 
-Перейдите в папку beckend и выполните команду:
+```
 
+Миграции вручную из папки `beckend`:
+
+```bash
 go run cmd/migrate/main.go -direction up -seed -dsn "postgres://postgres:postgres@127.0.0.1:5432/routine_dungeon?sslmode=disable"
+```
 
-# Аргументы для миграции:
--direction string
-        up or down (default "up")
--dsn string
-        Postgresql dsn (overrides env)
--force int
-        force clean dirty database state to a specific version (default -1)
--seed
-        apply seed data
--step int
-        number of migrations to apply (0 = all)
+### Аргументы migrate
 
+- `-direction` — `up` или `down` (default `up`)
+- `-dsn` — Postgresql DSN (overrides env)
+- `-force` — force clean dirty database state to a specific version (default `-1`)
+- `-seed` — apply seed data
+- `-step` — number of migrations to apply (`0` = all)
