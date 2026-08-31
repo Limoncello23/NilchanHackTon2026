@@ -33,7 +33,7 @@ func main() {
 
 	log.Println("Database is ready")
 
-	routineRepo := routine.NewMemoryRepository()
+	routineRepo := routine.NewPostgresRepository(pool)
 	routineService := routine.NewService(routineRepo)
 	routineHandler := routine.NewHandler(routineService)
 
