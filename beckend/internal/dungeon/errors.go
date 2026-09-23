@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrTaskAlreadyCompleted      = errors.New("task already completed")
+	ErrDungeonAlreadyDead        = errors.New("dungeon already dead")
 	ErrNoTasksInRoutine          = errors.New("no tasks in routine")
 	ErrInvalidRoutineID          = errors.New("invalid routine id")
 	ErrInvalidDungeonID          = errors.New("invalid dungeon id")

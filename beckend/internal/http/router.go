@@ -12,7 +12,10 @@ func NewRouter(routineHandler *routine.Handler, dungeonHandler *dungeon.DungeonH
 	mux := nethttp.NewServeMux()
 
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/openapi.yaml", openAPIHandler)
+
 	mux.HandleFunc("GET /routines", routineHandler.GetRoutines)
+	mux.HandleFunc("GET /routines/{id}", routineHandler.GetByID)
 	mux.HandleFunc("POST /routines", routineHandler.CreateRoutine)
 	mux.HandleFunc("POST /routines/{id}/dungeons", dungeonHandler.CreateDungeon)
 	mux.HandleFunc("GET /dungeons/{id}", dungeonHandler.GetDungeon)

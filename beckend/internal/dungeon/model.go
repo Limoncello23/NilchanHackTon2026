@@ -11,7 +11,7 @@ type Dungeon struct {
 	MaxHP           int       `json:"max_hp"`
 	HP              int       `json:"hp"`
 	CreatedAt       time.Time `json:"created_at"`
-	Status          bool      `json:"status"`
+	Status          string    `json:"status"`
 	RoutineID       int       `json:"routine_id"`
 	Tasks           []Task    `json:"tasks"`
 }

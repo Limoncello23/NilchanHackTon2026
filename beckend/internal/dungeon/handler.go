@@ -3,6 +3,7 @@ package dungeon
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -24,20 +25,21 @@ func (h *DungeonHandler) CreateDungeon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dungeon, err := h.service.CreateDungeon(routineID)
+	dungeon, err := h.service.CreateDungeon(r.Context(), routineID)
 	if err != nil {
 		writeDungeonError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	res, err := json.MarshalIndent(dungeon, "", "  ")
 	if err != nil {
 		writeDungeonError(w, err)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
 
+	w.WriteHeader(http.StatusCreated)
 	w.Write(res)
 }
 
@@ -48,20 +50,22 @@ func (h *DungeonHandler) GetDungeon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dungeon, err := h.service.GetDungeon(dungeonID)
+	dungeon, err := h.service.GetDungeon(r.Context(), dungeonID)
 	if err != nil {
+		fmt.Println("GetDungeon error:", err)
 		writeDungeonError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	res, err := json.MarshalIndent(dungeon, "", "  ")
 	if err != nil {
 		writeDungeonError(w, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 
+	w.WriteHeader(http.StatusOK)
 	w.Write(res)
 }
 
@@ -72,42 +76,94 @@ func (h *DungeonHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dungeon, err := h.service.CompleteTask(taskID)
+	dungeon, err := h.service.CompleteTask(r.Context(), taskID)
 	if err != nil {
 		writeDungeonError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	res, err := json.MarshalIndent(dungeon, "", "  ")
 	if err != nil {
 		writeDungeonError(w, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 
+	w.WriteHeader(http.StatusOK)
 	w.Write(res)
 }
 
 func writeDungeonError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrInvalidRoutineID):
-		http.Error(w, ErrInvalidRoutineID.Error(), http.StatusBadRequest)
+		http.Error(
+			w,
+			ErrInvalidRoutineID.Error(),
+			http.StatusBadRequest,
+		)
+
 	case errors.Is(err, ErrInvalidDungeonID):
-		http.Error(w, ErrInvalidDungeonID.Error(), http.StatusBadRequest)
+		http.Error(
+			w,
+			ErrInvalidDungeonID.Error(),
+			http.StatusBadRequest,
+		)
+
 	case errors.Is(err, ErrInvalidTaskID):
-		http.Error(w, ErrInvalidTaskID.Error(), http.StatusBadRequest)
+		http.Error(
+			w,
+			ErrInvalidTaskID.Error(),
+			http.StatusBadRequest,
+		)
+
 	case errors.Is(err, ErrInvalidDungeon):
-		http.Error(w, ErrInvalidDungeon.Error(), http.StatusBadRequest)
+		http.Error(
+			w,
+			ErrInvalidDungeon.Error(),
+			http.StatusBadRequest,
+		)
+
 	case errors.Is(err, ErrNoTasksInRoutine):
-		http.Error(w, ErrNoTasksInRoutine.Error(), http.StatusBadRequest)
+		http.Error(
+			w,
+			ErrNoTasksInRoutine.Error(),
+			http.StatusBadRequest,
+		)
+
 	case errors.Is(err, ErrDungeonNotFound):
-		http.Error(w, ErrDungeonNotFound.Error(), http.StatusNotFound)
+		http.Error(
+			w,
+			ErrDungeonNotFound.Error(),
+			http.StatusNotFound,
+		)
+
 	case errors.Is(err, ErrTaskNotFound):
-		http.Error(w, ErrTaskNotFound.Error(), http.StatusNotFound)
+		http.Error(
+			w,
+			ErrTaskNotFound.Error(),
+			http.StatusNotFound,
+		)
+
 	case errors.Is(err, ErrTaskAlreadyCompleted):
-		http.Error(w, ErrTaskAlreadyCompleted.Error(), http.StatusConflict)
+		http.Error(
+			w,
+			ErrTaskAlreadyCompleted.Error(),
+			http.StatusConflict,
+		)
+
+	case errors.Is(err, ErrDungeonAlreadyDead):
+		http.Error(
+			w,
+			ErrDungeonAlreadyDead.Error(),
+			http.StatusConflict,
+		)
+
 	default:
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(
+			w,
+			"internal server error",
+			http.StatusInternalServerError,
+		)
 	}
 }

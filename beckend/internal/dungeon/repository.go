@@ -16,12 +16,12 @@ type RoutineTaskProvider interface {
 }
 
 type Repository interface {
-	CreateDungeon(dungeon *Dungeon) (int, error)
-	GetDungeon(dungeonID int) (*Dungeon, error)
-	CompleteTask(taskID int) (*Dungeon, error)
-	CreateDungeonTasks(routineID, dungeonID int) error
-	GetDungeonTask(taskID int) (Task, error)
-	KillDungeon(dungeonID int) (*Dungeon, error)
+	CreateDungeon(ctx context.Context, dungeon *Dungeon) (int, error)
+	CreateDungeonWithTasks(ctx context.Context, dungeon *Dungeon) (int, error)
+	GetDungeon(ctx context.Context, dungeonID int) (*Dungeon, error)
+	CompleteTask(ctx context.Context, taskID int) (*Dungeon, error)
+	CreateDungeonTasks(ctx context.Context, routineID, dungeonID int) error
+	GetDungeonTask(ctx context.Context, taskID int) (Task, error)
 }
 
 type MemoryRepository struct {
@@ -45,7 +45,10 @@ func NewMemoryRepository(routineRepo RoutineTaskProvider) *MemoryRepository {
 	}
 }
 
-func (r *MemoryRepository) CreateDungeon(dungeon *Dungeon) (int, error) {
+func (r *MemoryRepository) CreateDungeon(
+	ctx context.Context,
+	dungeon *Dungeon,
+) (int, error) {
 	if dungeon == nil {
 		return 0, ErrInvalidDungeon
 	}
@@ -54,17 +57,80 @@ func (r *MemoryRepository) CreateDungeon(dungeon *Dungeon) (int, error) {
 	defer r.mu.Unlock()
 
 	dungeon.ID = r.nextDungeonID
+
 	if dungeon.CreatedAt.IsZero() {
 		dungeon.CreatedAt = time.Now()
 	}
 
-	r.dungeons[dungeon.ID] = cloneDungeon(dungeon) // Защита от изменения внешнего объекта после сохранения в репозитории
+	r.dungeons[dungeon.ID] = cloneDungeon(dungeon)
 	r.nextDungeonID++
 
 	return dungeon.ID, nil
 }
 
-func (r *MemoryRepository) CompleteTask(taskID int) (*Dungeon, error) {
+func (r *MemoryRepository) CreateDungeonWithTasks(
+	ctx context.Context,
+	dungeon *Dungeon,
+) (int, error) {
+	if dungeon == nil {
+		return 0, ErrInvalidDungeon
+	}
+
+	if r.routineRepo == nil {
+		return 0, ErrRoutineRepositoryRequired
+	}
+
+	if dungeon.RoutineID <= 0 {
+		return 0, ErrInvalidRoutineID
+	}
+
+	routineTasks, err := r.routineRepo.GetTasksOfRoutine(
+		ctx,
+		dungeon.RoutineID,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("get routine tasks: %w", err)
+	}
+
+	if len(routineTasks) == 0 {
+		return 0, ErrNoTasksInRoutine
+	}
+
+	if dungeon.CreatedAt.IsZero() {
+		dungeon.CreatedAt = time.Now()
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	dungeon.ID = r.nextDungeonID
+
+	r.dungeons[dungeon.ID] = cloneDungeon(dungeon)
+
+	dungeonTasks := make([]Task, 0, len(routineTasks))
+
+	for _, routineTask := range routineTasks {
+		dungeonTasks = append(dungeonTasks, Task{
+			ID:        r.nextTaskID,
+			Title:     routineTask.Title,
+			Damage:    routineTask.Damage,
+			Completed: false,
+			DungeonID: dungeon.ID,
+		})
+
+		r.nextTaskID++
+	}
+
+	r.dungeonTasks[dungeon.ID] = dungeonTasks
+	r.nextDungeonID++
+
+	return dungeon.ID, nil
+}
+
+func (r *MemoryRepository) CompleteTask(
+	ctx context.Context,
+	taskID int,
+) (*Dungeon, error) {
 	if taskID <= 0 {
 		return nil, ErrInvalidTaskID
 	}
@@ -74,38 +140,64 @@ func (r *MemoryRepository) CompleteTask(taskID int) (*Dungeon, error) {
 
 	dungeonID, task, ok := r.findDungeonTask(taskID)
 	if !ok {
-		return nil, fmt.Errorf("complete task %d: %w", taskID, ErrTaskNotFound)
+		return nil, fmt.Errorf(
+			"complete task %d: %w",
+			taskID,
+			ErrTaskNotFound,
+		)
 	}
+
 	if task.Completed {
 		return nil, ErrTaskAlreadyCompleted
 	}
 
 	dungeon, ok := r.dungeons[dungeonID]
 	if !ok {
-		return nil, fmt.Errorf("complete task: dungeon %d: %w", dungeonID, ErrDungeonNotFound)
+		return nil, fmt.Errorf(
+			"complete task: dungeon %d: %w",
+			dungeonID,
+			ErrDungeonNotFound,
+		)
+	}
+
+	if dungeon.Status == "DEAD" {
+		return nil, ErrDungeonAlreadyDead
 	}
 
 	task.Completed = true
 	dungeon.HP -= task.Damage
 
+	if dungeon.HP <= 0 {
+		dungeon.HP = 0
+		dungeon.Status = "DEAD"
+	}
+
 	return cloneDungeon(dungeon), nil
 }
-
-func (r *MemoryRepository) CreateDungeonTasks(routineID, dungeonID int) error {
+func (r *MemoryRepository) CreateDungeonTasks(
+	ctx context.Context,
+	routineID, dungeonID int,
+) error {
 	if routineID <= 0 {
 		return ErrInvalidRoutineID
 	}
+
 	if dungeonID <= 0 {
 		return ErrInvalidDungeonID
 	}
+
 	if r.routineRepo == nil {
 		return ErrRoutineRepositoryRequired
 	}
 
-	routineTasks, err := r.routineRepo.GetTasksOfRoutine(context.Background(), routineID)
+	routineTasks, err := r.routineRepo.GetTasksOfRoutine(
+		ctx,
+		routineID,
+	)
 	if err != nil {
 		return fmt.Errorf("get routine tasks: %w", err)
 	}
+
 	if len(routineTasks) == 0 {
 		return ErrNoTasksInRoutine
 	}
@@ -114,16 +206,23 @@ func (r *MemoryRepository) CreateDungeonTasks(routineID, dungeonID int) error {
 	defer r.mu.Unlock()
 
 	if _, ok := r.dungeons[dungeonID]; !ok {
-		return fmt.Errorf("create dungeon tasks: dungeon %d: %w", dungeonID, ErrDungeonNotFound)
+		return fmt.Errorf(
+			"create dungeon tasks: dungeon %d: %w",
+			dungeonID,
+			ErrDungeonNotFound,
+		)
 	}
 
-	// Tут берем из routineTasks[routineID] и создаем новые задачи для dungeonID
-
 	if len(r.dungeonTasks[dungeonID]) > 0 {
-		return fmt.Errorf("create dungeon tasks: dungeon %d: %w", dungeonID, ErrDungeonTasksAlreadyExist)
+		return fmt.Errorf(
+			"create dungeon tasks: dungeon %d: %w",
+			dungeonID,
+			ErrDungeonTasksAlreadyExist,
+		)
 	}
 
 	dungeonTasks := make([]Task, 0, len(routineTasks))
+
 	for _, routineTask := range routineTasks {
 		dungeonTasks = append(dungeonTasks, Task{
 			ID:        r.nextTaskID,
@@ -132,32 +231,19 @@ func (r *MemoryRepository) CreateDungeonTasks(routineID, dungeonID int) error {
 			Completed: false,
 			DungeonID: dungeonID,
 		})
+
 		r.nextTaskID++
 	}
 
 	r.dungeonTasks[dungeonID] = dungeonTasks
+
 	return nil
 }
 
-func (r *MemoryRepository) KillDungeon(dungeonID int) (*Dungeon, error) {
-	if dungeonID <= 0 {
-		return nil, ErrInvalidDungeonID
-	}
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	dungeon, ok := r.dungeons[dungeonID]
-	if !ok {
-		return nil, fmt.Errorf("kill dungeon %d: %w", dungeonID, ErrDungeonNotFound)
-	}
-
-	dungeon.Status = false
-
-	return cloneDungeon(dungeon), nil
-}
-
-func (r *MemoryRepository) GetDungeon(dungeonID int) (*Dungeon, error) {
+func (r *MemoryRepository) GetDungeon(
+	ctx context.Context,
+	dungeonID int,
+) (*Dungeon, error) {
 	if dungeonID <= 0 {
 		return nil, ErrInvalidDungeonID
 	}
@@ -167,19 +253,27 @@ func (r *MemoryRepository) GetDungeon(dungeonID int) (*Dungeon, error) {
 
 	dungeon, ok := r.dungeons[dungeonID]
 	if !ok {
-		return nil, fmt.Errorf("get dungeon %d: %w", dungeonID, ErrDungeonNotFound)
+		return nil, fmt.Errorf(
+			"get dungeon %d: %w",
+			dungeonID,
+			ErrDungeonNotFound,
+		)
 	}
 
 	result := cloneDungeon(dungeon)
 
 	tasks := r.dungeonTasks[dungeonID]
+
 	result.Tasks = make([]Task, len(tasks))
 	copy(result.Tasks, tasks)
 
 	return result, nil
 }
 
-func (r *MemoryRepository) GetDungeonTask(taskID int) (Task, error) {
+func (r *MemoryRepository) GetDungeonTask(
+	ctx context.Context,
+	taskID int,
+) (Task, error) {
 	if taskID <= 0 {
 		return Task{}, ErrInvalidTaskID
 	}
@@ -189,14 +283,20 @@ func (r *MemoryRepository) GetDungeonTask(taskID int) (Task, error) {
 
 	_, task, ok := r.findDungeonTask(taskID)
 	if !ok {
-		return Task{}, fmt.Errorf("get dungeon task %d: %w", taskID, ErrTaskNotFound)
+		return Task{}, fmt.Errorf(
+			"get dungeon task %d: %w",
+			taskID,
+			ErrTaskNotFound,
+		)
 	}
 
 	return *task, nil
 }
 
-// findDungeonTask must be called while r.mu is held for reading or writing.
-func (r *MemoryRepository) findDungeonTask(taskID int) (int, *Task, bool) {
+// findDungeonTask must be called while r.mu is held.
+func (r *MemoryRepository) findDungeonTask(
+	taskID int,
+) (int, *Task, bool) {
 	for dungeonID, tasks := range r.dungeonTasks {
 		for i := range tasks {
 			if tasks[i].ID == taskID {
@@ -210,9 +310,15 @@ func (r *MemoryRepository) findDungeonTask(taskID int) (int, *Task, bool) {
 
 func cloneDungeon(dungeon *Dungeon) *Dungeon {
 	clone := *dungeon
+
 	if dungeon.DescriptionBoss != nil {
 		description := *dungeon.DescriptionBoss
 		clone.DescriptionBoss = &description
+	}
+
+	if dungeon.Tasks != nil {
+		clone.Tasks = make([]Task, len(dungeon.Tasks))
+		copy(clone.Tasks, dungeon.Tasks)
 	}
 
 	return &clone

@@ -3,6 +3,7 @@ package routine
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 type CreateRoutineRequest struct {
@@ -64,8 +65,8 @@ func (h *Handler) GetRoutines(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	var id int
-	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
@@ -73,6 +74,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	routine, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
 		checkErrAndReturnStatus400or500(err, w)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

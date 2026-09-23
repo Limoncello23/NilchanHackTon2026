@@ -6,9 +6,9 @@ import (
 )
 
 type Service interface {
-	CreateDungeon(routineID int) (*Dungeon, error)
-	GetDungeon(dungeonID int) (*Dungeon, error)
-	CompleteTask(taskID int) (*Dungeon, error)
+	CreateDungeon(ctx context.Context, routineID int) (*Dungeon, error)
+	GetDungeon(ctx context.Context, dungeonID int) (*Dungeon, error)
+	CompleteTask(ctx context.Context, taskID int) (*Dungeon, error)
 }
 
 type service struct {
@@ -23,17 +23,17 @@ func NewService(repo Repository, routineRepo RoutineTaskProvider) *service {
 	}
 }
 
-func (s *service) CreateDungeon(routineID int) (*Dungeon, error) {
+func (s *service) CreateDungeon(ctx context.Context, routineID int) (*Dungeon, error) {
 	if routineID <= 0 {
 		return nil, ErrInvalidRoutineID
 	}
 
-	routine, err := s.routineRepo.GetByID(context.Background(), routineID)
+	routine, err := s.routineRepo.GetByID(ctx, routineID)
 	if err != nil {
 		return nil, fmt.Errorf("get routine: %w", err)
 	}
 
-	routineTasks, err := s.routineRepo.GetTasksOfRoutine(context.Background(), routineID)
+	routineTasks, err := s.routineRepo.GetTasksOfRoutine(ctx, routineID)
 	if err != nil {
 		return nil, fmt.Errorf("get routine tasks: %w", err)
 	}
@@ -43,72 +43,66 @@ func (s *service) CreateDungeon(routineID int) (*Dungeon, error) {
 	}
 
 	calculatedMaxHP := 0
+
 	for _, task := range routineTasks {
 		calculatedMaxHP += task.Damage
 	}
 
 	dungeon := &Dungeon{
-		ID:        0,               // ID will be set by the database - next id like in routie
-		NameBoss:  routine.Name,    // Default boss name
-		MaxHP:     calculatedMaxHP, // Default max HP - we can take tasksDMG * taksQuantity
-		HP:        calculatedMaxHP, // Default current HP
-		Status:    true,            // Dungeon is active
+		ID:        0,
+		NameBoss:  routine.Name,
+		MaxHP:     calculatedMaxHP,
+		HP:        calculatedMaxHP,
+		Status:    "ACTIVE",
 		RoutineID: routineID,
 	}
 
-	if id, err := s.repo.CreateDungeon(dungeon); err != nil {
-		return nil, fmt.Errorf("create dungeon: %w", err)
-	} else {
-		dungeon.ID = id
+	id, err := s.repo.CreateDungeonWithTasks(ctx, dungeon)
+	if err != nil {
+		return nil, fmt.Errorf("create dungeon with tasks: %w", err)
 	}
 
-	if err := s.repo.CreateDungeonTasks(routineID, dungeon.ID); err != nil {
-		return nil, fmt.Errorf("create dungeon tasks: %w", err)
+	dungeon.ID = id
+
+	dungeon, err = s.repo.GetDungeon(ctx, dungeon.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get created dungeon: %w", err)
 	}
 
 	return dungeon, nil
 }
 
-func (s *service) GetDungeon(dungeonID int) (*Dungeon, error) {
+func (s *service) GetDungeon(ctx context.Context, dungeonID int) (*Dungeon, error) {
 	if dungeonID <= 0 {
 		return nil, ErrInvalidDungeonID
 	}
 
-	if dungeon, err := s.repo.GetDungeon(dungeonID); err != nil {
+	dungeon, err := s.repo.GetDungeon(ctx, dungeonID)
+	if err != nil {
 		return nil, fmt.Errorf("get dungeon: %w", err)
-	} else {
-		return dungeon, nil
 	}
+
+	return dungeon, nil
 }
 
-func (s *service) CompleteTask(taskID int) (*Dungeon, error) {
+func (s *service) CompleteTask(ctx context.Context, taskID int) (*Dungeon, error) {
 	if taskID <= 0 {
 		return nil, ErrInvalidTaskID
 	}
 
-	task, err := s.repo.GetDungeonTask(taskID)
+	task, err := s.repo.GetDungeonTask(ctx, taskID)
 	if err != nil {
 		return nil, fmt.Errorf("get dungeon task: %w", err)
 	}
 
 	if task.Completed {
-		return nil, ErrTaskAlreadyCompleted // Task already completed, no need to update dungeon
-	} else {
-
-		dungeon, err := s.repo.CompleteTask(taskID)
-		if err != nil {
-			return nil, fmt.Errorf("complete task: %w", err)
-		}
-
-		// If the dungeon's HP is less than or equal to 0, mark it as dead
-		if dungeon.HP <= 0 {
-			dungeonKilled, err := s.repo.KillDungeon(dungeon.ID)
-			if err != nil {
-				return nil, fmt.Errorf("kill dungeon: %w", err)
-			}
-			return dungeonKilled, nil
-		}
-
-		return dungeon, nil
+		return nil, ErrTaskAlreadyCompleted
 	}
+
+	dungeon, err := s.repo.CompleteTask(ctx, taskID)
+	if err != nil {
+		return nil, fmt.Errorf("complete task: %w", err)
+	}
+
+	return dungeon, nil
 }

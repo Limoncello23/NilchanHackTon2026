@@ -13,7 +13,10 @@ type repositoryRoutineProvider struct {
 	err   error
 }
 
-func (p repositoryRoutineProvider) GetTasksOfRoutine(context.Context, int) ([]routine.Task, error) {
+func (p repositoryRoutineProvider) GetTasksOfRoutine(
+	context.Context,
+	int,
+) ([]routine.Task, error) {
 	if p.err != nil {
 		return nil, p.err
 	}
@@ -25,13 +28,21 @@ func (p repositoryRoutineProvider) GetByID(context.Context, int) (*routine.Routi
 	return nil, p.err
 }
 
-func TestMemoryRepositoryCreateDungeonTasks(t *testing.T) {
+func TestMemoryRepositoryCreateDungeonWithTasks(t *testing.T) {
 	t.Parallel()
 
 	repo := NewMemoryRepository(repositoryRoutineProvider{
 		tasks: []routine.Task{
-			{ID: 10, Title: "Send report", Damage: 20},
-			{ID: 11, Title: "Deploy app", Damage: 40},
+			{
+				ID:     10,
+				Title:  "Send report",
+				Damage: 20,
+			},
+			{
+				ID:     11,
+				Title:  "Deploy app",
+				Damage: 40,
+			},
 		},
 	})
 
@@ -39,57 +50,179 @@ func TestMemoryRepositoryCreateDungeonTasks(t *testing.T) {
 		NameBoss:  "Nilchan",
 		MaxHP:     60,
 		HP:        60,
-		Status:    true,
+		Status:    "ACTIVE",
 		RoutineID: 7,
 	}
-	dungeonID, err := repo.CreateDungeon(dungeon)
+
+	dungeonID, err := repo.CreateDungeonWithTasks(
+		context.Background(),
+		dungeon,
+	)
 	if err != nil {
-		t.Fatalf("CreateDungeon() error = %v", err)
+		t.Fatalf("CreateDungeonWithTasks() error = %v", err)
 	}
 
-	if err := repo.CreateDungeonTasks(7, dungeonID); err != nil {
-		t.Fatalf("CreateDungeonTasks() error = %v", err)
+	if dungeonID != 1 {
+		t.Fatalf(
+			"dungeonID = %d, want 1",
+			dungeonID,
+		)
 	}
 
-	firstTask, err := repo.GetDungeonTask(1)
+	firstTask, err := repo.GetDungeonTask(
+		context.Background(),
+		1,
+	)
 	if err != nil {
 		t.Fatalf("GetDungeonTask(1) error = %v", err)
 	}
-	if firstTask.ID != 1 || firstTask.Title != "Send report" || firstTask.Damage != 20 || firstTask.Completed || firstTask.DungeonID != dungeonID {
-		t.Fatalf("first dungeon task = %+v, want copied task with a new ID and dungeon ID %d", firstTask, dungeonID)
+
+	if firstTask.ID != 1 ||
+		firstTask.Title != "Send report" ||
+		firstTask.Damage != 20 ||
+		firstTask.Completed ||
+		firstTask.DungeonID != dungeonID {
+		t.Fatalf(
+			"first dungeon task = %+v, want copied task with new ID and dungeon ID %d",
+			firstTask,
+			dungeonID,
+		)
 	}
 
-	secondTask, err := repo.GetDungeonTask(2)
+	secondTask, err := repo.GetDungeonTask(
+		context.Background(),
+		2,
+	)
 	if err != nil {
 		t.Fatalf("GetDungeonTask(2) error = %v", err)
 	}
-	if secondTask.ID != 2 || secondTask.Title != "Deploy app" || secondTask.Damage != 40 || secondTask.Completed || secondTask.DungeonID != dungeonID {
-		t.Fatalf("second dungeon task = %+v, want copied task with a new ID and dungeon ID %d", secondTask, dungeonID)
+
+	if secondTask.ID != 2 ||
+		secondTask.Title != "Deploy app" ||
+		secondTask.Damage != 40 ||
+		secondTask.Completed ||
+		secondTask.DungeonID != dungeonID {
+		t.Fatalf(
+			"second dungeon task = %+v, want copied task with new ID and dungeon ID %d",
+			secondTask,
+			dungeonID,
+		)
 	}
 
-	updatedDungeon, err := repo.CompleteTask(firstTask.ID)
+	updatedDungeon, err := repo.CompleteTask(
+		context.Background(),
+		firstTask.ID,
+	)
 	if err != nil {
 		t.Fatalf("CompleteTask() error = %v", err)
 	}
+
 	if updatedDungeon.HP != 40 {
-		t.Fatalf("dungeon HP after task completion = %d, want 40", updatedDungeon.HP)
+		t.Fatalf(
+			"dungeon HP after task completion = %d, want 40",
+			updatedDungeon.HP,
+		)
 	}
 
-	completedTask, err := repo.GetDungeonTask(firstTask.ID)
-	if err != nil {
-		t.Fatalf("GetDungeonTask(%d) error = %v", firstTask.ID, err)
+	if updatedDungeon.Status != "ACTIVE" {
+		t.Fatalf(
+			"dungeon status = %q, want ACTIVE",
+			updatedDungeon.Status,
+		)
 	}
+
+	completedTask, err := repo.GetDungeonTask(
+		context.Background(),
+		firstTask.ID,
+	)
+	if err != nil {
+		t.Fatalf(
+			"GetDungeonTask(%d) error = %v",
+			firstTask.ID,
+			err,
+		)
+	}
+
 	if !completedTask.Completed {
 		t.Fatal("task must be marked as completed")
 	}
 }
+
+func TestMemoryRepositoryCreateDungeonWithTasksKillsDungeon(t *testing.T) {
+	t.Parallel()
+
+	repo := NewMemoryRepository(repositoryRoutineProvider{
+		tasks: []routine.Task{
+			{
+				ID:     10,
+				Title:  "Big task",
+				Damage: 100,
+			},
+		},
+	})
+
+	dungeon := &Dungeon{
+		NameBoss:  "Nilchan",
+		MaxHP:     100,
+		HP:        100,
+		Status:    "ACTIVE",
+		RoutineID: 7,
+	}
+
+	dungeonID, err := repo.CreateDungeonWithTasks(
+		context.Background(),
+		dungeon,
+	)
+	if err != nil {
+		t.Fatalf("CreateDungeonWithTasks() error = %v", err)
+	}
+
+	got, err := repo.CompleteTask(
+		context.Background(),
+		1,
+	)
+	if err != nil {
+		t.Fatalf("CompleteTask() error = %v", err)
+	}
+
+	if got.ID != dungeonID {
+		t.Fatalf(
+			"dungeon ID = %d, want %d",
+			got.ID,
+			dungeonID,
+		)
+	}
+
+	if got.HP != 0 {
+		t.Fatalf(
+			"HP = %d, want 0",
+			got.HP,
+		)
+	}
+
+	if got.Status != "DEAD" {
+		t.Fatalf(
+			"status = %q, want DEAD",
+			got.Status,
+		)
+	}
+}
+
 func TestMemoryRepositoryGetDungeonWithTasks(t *testing.T) {
 	t.Parallel()
 
 	repo := NewMemoryRepository(repositoryRoutineProvider{
 		tasks: []routine.Task{
-			{ID: 10, Title: "Send report", Damage: 20},
-			{ID: 11, Title: "Deploy app", Damage: 40},
+			{
+				ID:     10,
+				Title:  "Send report",
+				Damage: 20,
+			},
+			{
+				ID:     11,
+				Title:  "Deploy app",
+				Damage: 40,
+			},
 		},
 	})
 
@@ -97,51 +230,73 @@ func TestMemoryRepositoryGetDungeonWithTasks(t *testing.T) {
 		NameBoss:  "Nilchan",
 		MaxHP:     60,
 		HP:        60,
-		Status:    true,
+		Status:    "ACTIVE",
 		RoutineID: 7,
 	}
 
-	dungeonID, err := repo.CreateDungeon(dungeon)
+	dungeonID, err := repo.CreateDungeonWithTasks(
+		context.Background(),
+		dungeon,
+	)
 	if err != nil {
-		t.Fatalf("CreateDungeon() error = %v", err)
+		t.Fatalf("CreateDungeonWithTasks() error = %v", err)
 	}
 
-	if err := repo.CreateDungeonTasks(7, dungeonID); err != nil {
-		t.Fatalf("CreateDungeonTasks() error = %v", err)
-	}
-
-	got, err := repo.GetDungeon(dungeonID)
+	got, err := repo.GetDungeon(
+		context.Background(),
+		dungeonID,
+	)
 	if err != nil {
 		t.Fatalf("GetDungeon() error = %v", err)
 	}
 
 	if len(got.Tasks) != 2 {
-		t.Fatalf("len(Tasks) = %d, want 2", len(got.Tasks))
+		t.Fatalf(
+			"len(Tasks) = %d, want 2",
+			len(got.Tasks),
+		)
 	}
 
 	if got.Tasks[0].Title != "Send report" {
-		t.Fatalf("first task title = %q, want %q", got.Tasks[0].Title, "Send report")
+		t.Fatalf(
+			"first task title = %q, want %q",
+			got.Tasks[0].Title,
+			"Send report",
+		)
 	}
 
 	if got.Tasks[0].Damage != 20 {
-		t.Fatalf("first task damage = %d, want 20", got.Tasks[0].Damage)
+		t.Fatalf(
+			"first task damage = %d, want 20",
+			got.Tasks[0].Damage,
+		)
 	}
 
 	if got.Tasks[1].Title != "Deploy app" {
-		t.Fatalf("second task title = %q, want %q", got.Tasks[1].Title, "Deploy app")
+		t.Fatalf(
+			"second task title = %q, want %q",
+			got.Tasks[1].Title,
+			"Deploy app",
+		)
 	}
 
 	if got.Tasks[1].Damage != 40 {
-		t.Fatalf("second task damage = %d, want 40", got.Tasks[1].Damage)
+		t.Fatalf(
+			"second task damage = %d, want 40",
+			got.Tasks[1].Damage,
+		)
 	}
 
-	if got.Tasks[0].DungeonID != dungeonID || got.Tasks[1].DungeonID != dungeonID {
-		t.Fatalf("tasks have wrong dungeon ID")
+	if got.Tasks[0].DungeonID != dungeonID ||
+		got.Tasks[1].DungeonID != dungeonID {
+		t.Fatal("tasks have wrong dungeon ID")
 	}
 }
 
-func TestMemoryRepositoryCreateDungeonTasksErrors(t *testing.T) {
+func TestMemoryRepositoryCreateDungeonWithTasksErrors(t *testing.T) {
 	t.Parallel()
+
+	routineRepoErr := errors.New("routine repository unavailable")
 
 	tests := []struct {
 		name string
@@ -150,32 +305,97 @@ func TestMemoryRepositoryCreateDungeonTasksErrors(t *testing.T) {
 		want error
 	}{
 		{
-			name: "invalid routine ID",
-			repo: NewMemoryRepository(repositoryRoutineProvider{}),
+			name: "nil dungeon",
+			repo: NewMemoryRepository(repositoryRoutineProvider{
+				tasks: []routine.Task{
+					{
+						Title:  "Task",
+						Damage: 1,
+					},
+				},
+			}),
 			call: func(repo *MemoryRepository) error {
-				return repo.CreateDungeonTasks(0, 1)
+				_, err := repo.CreateDungeonWithTasks(
+					context.Background(),
+					nil,
+				)
+
+				return err
+			},
+			want: ErrInvalidDungeon,
+		},
+		{
+			name: "invalid routine ID",
+			repo: NewMemoryRepository(repositoryRoutineProvider{
+				tasks: []routine.Task{
+					{
+						Title:  "Task",
+						Damage: 1,
+					},
+				},
+			}),
+			call: func(repo *MemoryRepository) error {
+				_, err := repo.CreateDungeonWithTasks(
+					context.Background(),
+					&Dungeon{
+						RoutineID: 0,
+					},
+				)
+
+				return err
 			},
 			want: ErrInvalidRoutineID,
 		},
 		{
-			name: "routine has no tasks",
-			repo: NewMemoryRepository(repositoryRoutineProvider{}),
+			name: "routine repository required",
+			repo: NewMemoryRepository(nil),
 			call: func(repo *MemoryRepository) error {
-				dungeonID, err := repo.CreateDungeon(&Dungeon{HP: 1})
-				if err != nil {
-					return err
-				}
-				return repo.CreateDungeonTasks(1, dungeonID)
+				_, err := repo.CreateDungeonWithTasks(
+					context.Background(),
+					&Dungeon{
+						RoutineID: 1,
+					},
+				)
+
+				return err
+			},
+			want: ErrRoutineRepositoryRequired,
+		},
+		{
+			name: "routine has no tasks",
+			repo: NewMemoryRepository(
+				repositoryRoutineProvider{},
+			),
+			call: func(repo *MemoryRepository) error {
+				_, err := repo.CreateDungeonWithTasks(
+					context.Background(),
+					&Dungeon{
+						RoutineID: 1,
+					},
+				)
+
+				return err
 			},
 			want: ErrNoTasksInRoutine,
 		},
 		{
-			name: "dungeon does not exist",
-			repo: NewMemoryRepository(repositoryRoutineProvider{tasks: []routine.Task{{Title: "Task", Damage: 1}}}),
+			name: "routine repository error",
+			repo: NewMemoryRepository(
+				repositoryRoutineProvider{
+					err: routineRepoErr,
+				},
+			),
 			call: func(repo *MemoryRepository) error {
-				return repo.CreateDungeonTasks(1, 99)
+				_, err := repo.CreateDungeonWithTasks(
+					context.Background(),
+					&Dungeon{
+						RoutineID: 1,
+					},
+				)
+
+				return err
 			},
-			want: ErrDungeonNotFound,
+			want: routineRepoErr,
 		},
 	}
 
@@ -184,9 +404,161 @@ func TestMemoryRepositoryCreateDungeonTasksErrors(t *testing.T) {
 			t.Parallel()
 
 			err := tt.call(tt.repo)
+
 			if !errors.Is(err, tt.want) {
-				t.Fatalf("error = %v, want %v", err, tt.want)
+				t.Fatalf(
+					"error = %v, want %v",
+					err,
+					tt.want,
+				)
 			}
 		})
+	}
+}
+
+func TestMemoryRepositoryGetDungeonErrors(t *testing.T) {
+	t.Parallel()
+
+	repo := NewMemoryRepository(
+		repositoryRoutineProvider{},
+	)
+
+	_, err := repo.GetDungeon(
+		context.Background(),
+		999,
+	)
+
+	if !errors.Is(err, ErrDungeonNotFound) {
+		t.Fatalf(
+			"error = %v, want %v",
+			err,
+			ErrDungeonNotFound,
+		)
+	}
+}
+
+func TestMemoryRepositoryGetDungeonTaskErrors(t *testing.T) {
+	t.Parallel()
+
+	repo := NewMemoryRepository(
+		repositoryRoutineProvider{},
+	)
+
+	_, err := repo.GetDungeonTask(
+		context.Background(),
+		999,
+	)
+
+	if !errors.Is(err, ErrTaskNotFound) {
+		t.Fatalf(
+			"error = %v, want %v",
+			err,
+			ErrTaskNotFound,
+		)
+	}
+}
+
+func TestMemoryRepositoryCompleteTaskErrors(t *testing.T) {
+	t.Parallel()
+
+	repo := NewMemoryRepository(
+		repositoryRoutineProvider{
+			tasks: []routine.Task{
+				{
+					Title:  "Task",
+					Damage: 10,
+				},
+			},
+		},
+	)
+
+	_, err := repo.CompleteTask(
+		context.Background(),
+		0,
+	)
+
+	if !errors.Is(err, ErrInvalidTaskID) {
+		t.Fatalf(
+			"error = %v, want %v",
+			err,
+			ErrInvalidTaskID,
+		)
+	}
+
+	_, err = repo.CompleteTask(
+		context.Background(),
+		999,
+	)
+
+	if !errors.Is(err, ErrTaskNotFound) {
+		t.Fatalf(
+			"error = %v, want %v",
+			err,
+			ErrTaskNotFound,
+		)
+	}
+}
+func TestMemoryRepositoryCompleteTaskAfterDungeonDeath(t *testing.T) {
+	t.Parallel()
+
+	repo := NewMemoryRepository(repositoryRoutineProvider{
+		tasks: []routine.Task{
+			{
+				Title:  "Kill dungeon",
+				Damage: 100,
+			},
+			{
+				Title:  "Second task",
+				Damage: 20,
+			},
+		},
+	})
+
+	_, err := repo.CreateDungeonWithTasks(
+		context.Background(),
+		&Dungeon{
+			NameBoss:  "Nilchan",
+			MaxHP:     100,
+			HP:        100,
+			Status:    "ACTIVE",
+			RoutineID: 7,
+		},
+	)
+	if err != nil {
+		t.Fatalf("CreateDungeonWithTasks() error = %v", err)
+	}
+
+	got, err := repo.CompleteTask(
+		context.Background(),
+		1,
+	)
+	if err != nil {
+		t.Fatalf("first CompleteTask() error = %v", err)
+	}
+
+	if got.HP != 0 {
+		t.Fatalf(
+			"HP = %d, want 0",
+			got.HP,
+		)
+	}
+
+	if got.Status != "DEAD" {
+		t.Fatalf(
+			"status = %q, want DEAD",
+			got.Status,
+		)
+	}
+
+	_, err = repo.CompleteTask(
+		context.Background(),
+		2,
+	)
+	if !errors.Is(err, ErrDungeonAlreadyDead) {
+		t.Fatalf(
+			"CompleteTask() error = %v, want %v",
+			err,
+			ErrDungeonAlreadyDead,
+		)
 	}
 }

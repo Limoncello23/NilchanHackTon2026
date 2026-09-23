@@ -1,0 +1,353 @@
+openapi: 3.0.3
+
+info:
+  title: Dungeon of Routine API
+  description: API for managing routines, dungeons and routine tasks.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Health
+  - name: Routines
+  - name: Dungeons
+  - name: Tasks
+
+paths:
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /routines:
+    get:
+      tags:
+        - Routines
+      summary: Get all routines
+      responses:
+        "200":
+          description: List of routines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Routine"
+
+    post:
+      tags:
+        - Routines
+      summary: Create a routine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoutineRequest"
+      responses:
+        "201":
+          description: Routine created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Routine"
+
+        "400":
+          description: Invalid request
+
+        "500":
+          description: Internal server error
+
+  /routines/{id}:
+    get:
+      tags:
+        - Routines
+      summary: Get routine by ID
+      parameters:
+        - $ref: "#/components/parameters/RoutineID"
+      responses:
+        "200":
+          description: Routine
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Routine"
+
+        "400":
+          description: Invalid routine ID
+
+        "404":
+          description: Routine not found
+
+  /routines/{id}/dungeons:
+    post:
+      tags:
+        - Dungeons
+      summary: Create dungeon from routine
+      parameters:
+        - $ref: "#/components/parameters/RoutineID"
+      responses:
+        "201":
+          description: Dungeon created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dungeon"
+
+        "400":
+          description: Invalid routine ID
+
+        "404":
+          description: Routine not found
+
+        "500":
+          description: Internal server error
+
+  /dungeons/{id}:
+    get:
+      tags:
+        - Dungeons
+      summary: Get dungeon by ID
+      parameters:
+        - $ref: "#/components/parameters/DungeonID"
+      responses:
+        "200":
+          description: Dungeon
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dungeon"
+
+        "400":
+          description: Invalid dungeon ID
+
+        "404":
+          description: Dungeon not found
+
+  /tasks/{id}/complete:
+    post:
+      tags:
+        - Tasks
+      summary: Complete a dungeon task
+      parameters:
+        - $ref: "#/components/parameters/TaskID"
+      responses:
+        "200":
+          description: Dungeon after task completion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dungeon"
+
+        "400":
+          description: Invalid task ID
+
+        "404":
+          description: Task not found
+
+        "409":
+          description: Task already completed or dungeon already dead
+
+        "500":
+          description: Internal server error
+
+components:
+
+  parameters:
+
+    RoutineID:
+      name: id
+      in: path
+      required: true
+      description: Routine ID
+      schema:
+        type: integer
+        minimum: 1
+        example: 7
+
+    DungeonID:
+      name: id
+      in: path
+      required: true
+      description: Dungeon ID
+      schema:
+        type: integer
+        minimum: 1
+        example: 3
+
+    TaskID:
+      name: id
+      in: path
+      required: true
+      description: Dungeon task ID
+      schema:
+        type: integer
+        minimum: 1
+        example: 5
+
+  schemas:
+
+    CreateRoutineRequest:
+      type: object
+      required:
+        - name
+        - repeat
+        - tasks
+      properties:
+        name:
+          type: string
+          example: Morning routine
+
+        repeat:
+          type: string
+          enum:
+            - daily
+            - weekly
+          example: daily
+
+        tasks:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/TaskInput"
+
+    TaskInput:
+      type: object
+      required:
+        - title
+        - damage
+      properties:
+        title:
+          type: string
+          example: Push ups
+
+        damage:
+          type: integer
+          minimum: 1
+          example: 10
+
+    Routine:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 7
+
+        name:
+          type: string
+          example: Morning routine
+
+        repeat:
+          type: string
+          enum:
+            - daily
+            - weekly
+          example: daily
+
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-08-28T02:36:26Z
+
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineTask"
+
+    RoutineTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 17
+
+        title:
+          type: string
+          example: Push ups
+
+        damage:
+          type: integer
+          example: 10
+
+    Dungeon:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 3
+
+        name_boss:
+          type: string
+          example: Nilchan
+
+        description_boss:
+          type: string
+          nullable: true
+          example: Complete your routine to defeat the boss.
+
+        max_hp:
+          type: integer
+          example: 30
+
+        hp:
+          type: integer
+          minimum: 0
+          example: 20
+
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-08-28T02:36:26Z
+
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - DEAD
+          example: ACTIVE
+
+        routine_id:
+          type: integer
+          example: 7
+
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/DungeonTask"
+
+    DungeonTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 5
+
+        title:
+          type: string
+          example: Push ups
+
+        damage:
+          type: integer
+          example: 10
+
+        completed:
+          type: boolean
+          example: false
+
+        dungeon_id:
+          type: integer
+          example: 3

@@ -33,15 +33,15 @@ func main() {
 
 	log.Println("Database is ready")
 
-	routineRepo := routine.NewMemoryRepository()
-	routineService := routine.NewService(routineRepo)
-	routineHandler := routine.NewHandler(routineService)
+routineRepo := routine.NewPostgresRepository(pool)
+routineService := routine.NewService(routineRepo)
+routineHandler := routine.NewHandler(routineService)
 
-	dungeonRepo := dungeon.NewMemoryRepository(routineRepo)
-	dungeonService := dungeon.NewService(dungeonRepo, routineService)
-	dungeonHandler := dungeon.NewDungeonHandler(dungeonService)
+dungeonRepo := dungeon.NewPostgresRepository(pool)
+dungeonService := dungeon.NewService(dungeonRepo, routineService)
+dungeonHandler := dungeon.NewDungeonHandler(dungeonService)
 
-	router := apphttp.NewRouter(routineHandler, dungeonHandler)
+router := apphttp.NewRouter(routineHandler, dungeonHandler)
 
 	fmt.Println("Server started on :8080")
 

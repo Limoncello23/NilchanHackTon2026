@@ -2,6 +2,7 @@ package routine
 
 import (
 	"context"
+	"sort"
 )
 
 type Repository interface {
@@ -23,7 +24,10 @@ func NewMemoryRepository() Repository {
 	}
 }
 
-func (r *MemoryRepository) Create(ctx context.Context, routine *Routine) error {
+func (r *MemoryRepository) Create(
+	ctx context.Context,
+	routine *Routine,
+) error {
 	routine.ID = r.nextID
 	r.routines[routine.ID] = routine
 	r.nextID++
@@ -31,17 +35,30 @@ func (r *MemoryRepository) Create(ctx context.Context, routine *Routine) error {
 	return nil
 }
 
-func (r *MemoryRepository) GetAll(ctx context.Context) ([]*Routine, error) {
+func (r *MemoryRepository) GetAll(
+	ctx context.Context,
+) ([]*Routine, error) {
 	routines := make([]*Routine, 0, len(r.routines))
 
-	for k := range r.routines {
-		routines = append(routines, r.routines[k])
+	ids := make([]int, 0, len(r.routines))
+
+	for id := range r.routines {
+		ids = append(ids, id)
+	}
+
+	sort.Ints(ids)
+
+	for _, id := range ids {
+		routines = append(routines, r.routines[id])
 	}
 
 	return routines, nil
 }
 
-func (r *MemoryRepository) GetByID(ctx context.Context, id int) (*Routine, error) {
+func (r *MemoryRepository) GetByID(
+	ctx context.Context,
+	id int,
+) (*Routine, error) {
 	routine, ok := r.routines[id]
 	if !ok {
 		return nil, ErrRoutineNotExist
@@ -50,7 +67,10 @@ func (r *MemoryRepository) GetByID(ctx context.Context, id int) (*Routine, error
 	return routine, nil
 }
 
-func (r *MemoryRepository) GetTasksOfRoutine(ctx context.Context, id int) ([]Task, error) {
+func (r *MemoryRepository) GetTasksOfRoutine(
+	ctx context.Context,
+	id int,
+) ([]Task, error) {
 	routine, ok := r.routines[id]
 	if !ok {
 		return nil, ErrRoutineNotExist
