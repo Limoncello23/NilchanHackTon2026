@@ -104,6 +104,14 @@ func TestServiceCreateDungeon(t *testing.T) {
 
 	repo := &serviceRepositoryStub{
 		createDungeonWithTasksID: 8,
+		getDungeon: &Dungeon{
+			ID:        8,
+			NameBoss:  "Test boss",
+			MaxHP:     40,
+			HP:        40,
+			Status:    "ACTIVE",
+			RoutineID: 3,
+		},
 	}
 
 	service := NewService(
@@ -160,6 +168,7 @@ func TestServiceCreateDungeon(t *testing.T) {
 		)
 	}
 }
+
 func TestServiceGetDungeon(t *testing.T) {
 	t.Parallel()
 
